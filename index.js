@@ -5,7 +5,30 @@ var semver = require('semver');
 module.exports = {
   name: 'ember-cli-foundation-sass',
 
-  included(app) {
+  treeForVendor(defaultTree) {
+    var map = require("broccoli-stew").map;
+    var Funnel = require("broccoli-funnel");
+    const mergeTrees = require('broccoli-merge-trees');
+
+    let browserVendorLib=new Funnel('bower_components/foundation/js', {
+      destDir: 'foundation',
+      files: ['foundation.js']
+    });
+    let modernizrVendorLib=new Funnel('bower_components/modernizr', {
+      destDir: 'foundation',
+      files: ['modernizr.js']
+    });
+    let fastclickVendorLib=new Funnel('bower_components/fastclick/lib', {
+      destDir: 'foundation',
+      files: ['fastclick.js']
+    });
+    browserVendorLib = map(browserVendorLib, (content) => `if (typeof FastBoot === 'undefined') { ${content} }`);
+    modernizrVendorLib = map(modernizrVendorLib, (content) => `if (typeof FastBoot === 'undefined') { ${content} }`);
+    fastclickVendorLib = map(fastclickVendorLib, (content) => `if (typeof FastBoot === 'undefined') { ${content} }`);
+    return new mergeTrees([defaultTree, browserVendorLib, modernizrVendorLib, fastclickVendorLib]);
+  },
+
+  included: function(app) {
     this._super.included.apply(this, arguments);
 
     if(!app.options['sassOptions']) {
@@ -39,33 +62,14 @@ module.exports = {
     }
 
     var options          = app.options['ember-cli-foundation-sass'] || {};
-    var foundationJSPath = path.join(app.bowerDirectory, 'foundation', 'js', 'foundation');
-    var modernizrPath    = path.join(app.bowerDirectory, 'modernizr');
-    var fastclickPath    = path.join(app.bowerDirectory, 'fastclick', 'lib');
-
     if (options.modernizr) {
-      app.import(path.join(modernizrPath, 'modernizr.js'));
+      app.import('vendor/foundation/modernizr.js');
     }
 
     if (options.fastclick) {
-      app.import(path.join(fastclickPath, 'fastclick.js'));
+      app.import('vendor/foundation/fastclick.js');
     }
 
-    //Includes the foundation js depending on the given option 'all', true, ['topbar']
-    if (options.foundationJs) {
-      if (typeof options.foundationJs == 'string' || options.foundationJs instanceof String) {
-        if (options.foundationJs === 'all') {
-          app.import(path.join(app.bowerDirectory, 'foundation', 'js', 'foundation.js'));
-        }
-      } else {
-        app.import(path.join(foundationJSPath, 'foundation.js'));
-      }
-
-      if (options.foundationJs instanceof Array) {
-        options.foundationJs.forEach(function(componentName) {
-          app.import(path.join(foundationJSPath, 'foundation.' + componentName + '.js'));
-        });
-      }
-    }
+    app.import('vendor/foundation/foundation.js');
   }
 };
