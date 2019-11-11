@@ -14,18 +14,25 @@ module.exports = {
       destDir: 'foundation',
       files: ['foundation.js']
     });
+    browserVendorLib = map(browserVendorLib, (content) => `if (typeof FastBoot === 'undefined') { ${content} }`);
+
     let modernizrVendorLib=new Funnel('bower_components/modernizr', {
       destDir: 'foundation',
       files: ['modernizr.js']
     });
+    modernizrVendorLib = map(modernizrVendorLib, (content) => `if (typeof FastBoot === 'undefined') { ${content} }`);
+
     let fastclickVendorLib=new Funnel('bower_components/fastclick/lib', {
       destDir: 'foundation',
       files: ['fastclick.js']
     });
-    browserVendorLib = map(browserVendorLib, (content) => `if (typeof FastBoot === 'undefined') { ${content} }`);
-    modernizrVendorLib = map(modernizrVendorLib, (content) => `if (typeof FastBoot === 'undefined') { ${content} }`);
     fastclickVendorLib = map(fastclickVendorLib, (content) => `if (typeof FastBoot === 'undefined') { ${content} }`);
-    return new mergeTrees([defaultTree, browserVendorLib, modernizrVendorLib, fastclickVendorLib]);
+
+    let nodes = [browserVendorLib, modernizrVendorLib, fastclickVendorLib];
+    if (defaultTree) {
+      nodes.unshift(defaultTree);
+    }
+    return new mergeTrees(nodes);
   },
 
   included: function(app) {
